@@ -1,0 +1,139 @@
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                       retrex_app.py                                                                                                                                                                                                                                                                                                                                                                                                                                                                           Modified  
+        self.geometry("1000x750")
+        self.resizable(False, False)
+        self.configure(bg="#000")
+
+       	self.giris_img = None
+        self.bg_img = None
+        self.cpu_data = [0] * 50
+        self.ram_data = [0] * 50
+
+       	self.usd_rate = "..."
+        self.eur_rate = "..."
+        self.deprem_bilgi = "Veri bekleniyor..."
+
+       	self.giris_ekranini_olustur()
+
+    def giris_ekranini_olustur(self):
+        self.login_frame = tk.Frame(self, bg="#000")
+        self.login_frame.pack(expand=True, fill="both")
+
+       	if os.path.exists(PROFILE_IMG_PATH):
+            img = Image.open(PROFILE_IMG_PATH).resize((180, 180), Image.Resampling.LANCZOS)
+            self.giris_img = ImageTk.PhotoImage(img)
+            tk.Label(self.login_frame, image=self.giris_img, bg="#000").pack(pady=20)
+
+       	tk.Label(self.login_frame, text="RETREX OS: GÜVENLİ ERİŞİM", fg="cyan", bg="#000", font=("Consolas", 18, "bold")).pack()
+        self.pass_entry = tk.Entry(self.login_frame, show="*", width=25, justify="center", bg="#111", fg="white", insertbackground="white")
+        self.pass_entry.pack(pady=15)
+        self.pass_entry.focus_set()
+
+       	tk.Button(self.login_frame, text="SİSTEME BAĞLAN", command=self.giris_kontrol, bg="#00CED1", fg="black", font=("Consolas", 10, "bold"), width=20).pack()
+
+    def giris_kontrol(self):
+        if self.pass_entry.get() == SIFRE:
+            threading.Thread(target=self.veri_guncelleme_dongusu, daemon=True).start()
+            self.dashboard_baslat()
+        else:
+            messagebox.showerror("HATA", "Geçersiz Kimlik!")
+
+    def veri_guncelleme_dongusu(self):
+        while True:
+            try:
+                # Döviz
+                r_usd = requests.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=5)
+                self.usd_rate = f"{r_usd.json()['rates']['TRY']:.2f}"
+                r_eur = requests.get("https://api.exchangerate-api.com/v4/latest/EUR", timeout=5)
+                self.eur_rate = f"{r_eur.json()['rates']['TRY']:.2f}"
+
+                # Deprem
+                r_deprem = requests.get("https://api.orhanaydogdu.com.tr/deprem/kandilli/live", timeout=5)
+                d = r_deprem.json()['result'][0]
+                self.deprem_bilgi = f"{d['lokasyon'][:20]}\nŞiddet: {d['mag']} | {d['date'][11:16]}"
+            except:
+                self.deprem_bilgi = "Veri alınamadı."
+            time.sleep(600)
+
+    def dashboard_baslat(self):
+        for widget in self.winfo_children(): widget.destroy()
+        self.canvas = tk.Canvas(self, width=1000, height=750, highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+
+       	if os.path.exists(BG_PATH):
+            bg = Image.open(BG_PATH).resize((1000, 750), Image.Resampling.LANCZOS)
+            self.bg_img = ImageTk.PhotoImage(bg)
+            self.canvas.create_image(0, 0, image=self.bg_img, anchor="nw")
+
+        # Paneller
+        self.canvas.create_rectangle(20, 20, 280, 140, fill="#050505", outline="cyan", width=2)
+        self.info_label = tk.Label(self, text="", bg="#050505", fg="white", font=("Consolas", 11), justify="left")
+        self.canvas.create_window(150, 65, window=self.info_label)
+        self.weather_label = tk.Label(self, text="HAVA: 12°C / Eskişehir", bg="#050505", fg="#FFD700", font=("Consolas", 11, "bold"))
+        self.canvas.create_window(150, 115, window=self.weather_label)
+
+        # Sağ Üst: Performans
+        self.canvas.create_rectangle(720, 20, 980, 240, fill="#050505", outline="white", width=2)
+        self.canvas.create_text(850, 40, text="SİSTEM DURUMU", fill="cyan", font=("Consolas", 10, "bold"))
+        self.canvas.create_text(755, 130, text="CPU (%)", fill="cyan", font=("Consolas", 9, "bold"), anchor="w")
+        self.canvas.create_text(755, 220, text="RAM (%)", fill="#FF4500", font=("Consolas", 9, "bold"), anchor="w")
+
+        # Orta: Döviz ve Deprem Panelleri
+        self.canvas.create_rectangle(350, 20, 650, 130, fill="#050505", outline="#00FF00", width=2)
+        self.canvas.create_text(500, 35, text="CANLI PİYASA (TRY)", fill="#00FF00", font=("Consolas", 10, "bold"))
+        self.currency_label = tk.Label(self, text="...", bg="#050505", fg="white", font=("Consolas", 13, "bold"))
+        self.canvas.create_window(500, 85, window=self.currency_label)
+
+        self.canvas.create_rectangle(350, 145, 650, 240, fill="#050505", outline="#FF4500", width=2)
+        self.canvas.create_text(500, 160, text="SON DEPREM (KANDİLLİ)", fill="#FF4500", font=("Consolas", 9, "bold"))
+        self.deprem_label = tk.Label(self, text="Yükleniyor...", bg="#050505", fg="white", font=("Consolas", 8, "bold"))
+        self.canvas.create_window(500, 200, window=self.deprem_label)
+
+        # Sol Alt: Bilgiler
+        self.canvas.create_rectangle(20, 580, 320, 730, fill="#050505", outline="cyan", width=2)
+        kisi_bilgi = f"KULLANICI: {KULLANICI}\nRÜTBE    : {RUTBE}\nDURUM    : AKTİF\nGÜVENLİK : SEVİYE 5"
+        self.canvas.create_text(170, 655, text=kisi_bilgi, fill="white", font=("Consolas", 12, "bold"), justify="left")
+
+        # Butonlar
+        self.hud_buton(930, 680, "UYG", "#00CED1", self.menu_ac)
+        self.hud_buton(930, 590, "AI", "#FF4500", lambda e: messagebox.showinfo("AI", "Sistem kararlı, Retrex."))
+
+       	self.guncelleme_dongusu()
+
+    def hud_buton(self, x, y, metin, renk, fonk):
+        b = self.canvas.create_oval(x-35, y-35, x+35, y+35, fill=renk, outline="white", width=2)
+        self.canvas.create_text(x, y, text=metin, fill="black", font=("Consolas", 10, "bold"))
+        self.canvas.tag_bind(b, "<Button-1>", fonk)
+
+    def guncelleme_dongusu(self):
+        self.info_label.config(text=f"TARİH: {time.strftime('%d/%m/%Y')}\nSAAT : {time.strftime('%H:%M:%S')}")
+        self.currency_label.config(text=f"DOLAR: {self.usd_rate} ₺ | EURO: {self.eur_rate} ₺")
+        self.deprem_label.config(text=self.deprem_bilgi)
+
+        cpu = psutil.cpu_percent()
+        ram = psutil.virtual_memory().percent
+        self.cpu_data.pop(0); self.cpu_data.append(cpu)
+        self.ram_data.pop(0); self.ram_data.append(ram)
+
+        self.canvas.delete("grafik_iz")
+        for i in range(len(self.cpu_data) - 1):
+            x1, x2 = 750 + (i * 4), 750 + ((i + 1) * 4)
+            self.canvas.create_line(x1, 130-(self.cpu_data[i]*0.7), x2, 130-(self.cpu_data[i+1]*0.7), fill="cyan", tags="grafik_iz")
+            self.canvas.create_line(x1, 220-(self.ram_data[i]*0.7), x2, 220-(self.ram_data[i+1]*0.7), fill="#FF4500", tags="grafik_iz")
+        self.after(1000, self.guncelleme_dongusu)
+
+    def menu_ac(self, event):
+        m = tk.Toplevel(self)
+        m.title("Sistem Menüsü")
+        m.geometry("250x150")
+        m.configure(bg="#111")
+        tk.Button(m, text="TERMİNAL", command=lambda: subprocess.Popen(["gnome-terminal"]), bg="cyan", width=20, font=("Consolas", 9, "bold")).pack(pady=10)
+        tk.Button(m, text="TARAYICI", command=lambda: webbrowser.open("https://www.youtube.com"), bg="white", width=20, font=("Consolas", 9, "bold")).pack(pady=10)
+
+if __name__ == "__main__":
+    app = RetrexOS()
+    app.mainloop()
+
+
+
+
+
