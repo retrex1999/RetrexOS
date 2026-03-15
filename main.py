@@ -8,13 +8,18 @@ import psutil
 from PIL import Image, ImageTk
 import subprocess
 import webbrowser
+from dotenv import load_dotenv
 
-# Sabitler / Ayarlar
-PROFILE_IMG_PATH = "profile.png" # Varsayılan yol
-BG_PATH = "background.jpg"     # Varsayılan yol
-SIFRE = "1234"                 # Varsayılan şifre
-KULLANICI = "Retrex User"
-RUTBE = "Admin"
+# .env dosyasını yükle
+load_dotenv()
+
+
+# Sabitler / Ayarlar ( .env dosyasından yüklenir )
+PROFILE_IMG_PATH = os.getenv("PROFILE_IMG_PATH", "assets/profile.png")
+BG_PATH = os.getenv("BG_PATH", "assets/background.jpg")
+SIFRE = os.getenv("SIFRE", "1234")
+KULLANICI = os.getenv("KULLANICI", "Retrex User")
+RUTBE = os.getenv("RUTBE", "Admin")
 
 class RetrexOS(tk.Tk):
     def __init__(self):

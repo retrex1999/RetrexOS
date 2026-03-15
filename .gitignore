@@ -2,6 +2,7 @@
 venv/
 ENV/
 env/
+.env
 .venv/
 
 # Python Cache
@@ -14,5 +15,4 @@ __pycache__/
 Thumbs.db
 
 # Project Specific
-profile.png
-background.jpg
+# (Assets are tracked via Git LFS)
