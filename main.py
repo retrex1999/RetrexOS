@@ -107,7 +107,7 @@ class RetrexOS(tk.Tk):
         # Orta: Döviz ve Deprem Panelleri
         self.canvas.create_rectangle(350, 20, 650, 130, fill="#050505", outline="#00FF00", width=2)
         self.canvas.create_text(500, 35, text="CANLI PİYASA (TRY)", fill="#00FF00", font=("Consolas", 10, "bold"))
-        self.currency_label = tk.Label(self, text="...", bg="#050505", fg="white", font=("Consolas", 13, "bold"))
+        self.currency_label = tk.Label(self, text="...", bg="#050505", fg="white", font=("Consolas", 11, "bold"))
         self.canvas.create_window(500, 85, window=self.currency_label)
 
         self.canvas.create_rectangle(350, 145, 650, 240, fill="#050505", outline="#FF4500", width=2)
